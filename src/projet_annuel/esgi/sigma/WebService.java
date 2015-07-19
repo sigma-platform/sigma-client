@@ -14,7 +14,6 @@ import java.util.logging.Logger;
  */
 public class WebService {
 
-
     public WebService() {}
 
     public JSONObject connexion(String email, StringBuilder password) throws JSONException, IOException {
@@ -47,14 +46,12 @@ public class WebService {
         reader.close();
 
         return result;
-
-
     }
 
     public JSONObject UserProjectList(String token) throws JSONException, IOException {
         JSONObject obj;
         try {
-            URL project = new URL("http://sigma.fabien-cote.fr/api/project/user/?token=" + token);
+            URL project = new URL("http://sigma.fabien-cote.fr/api/project/user/manager?token=" + token);
             HttpURLConnection conn = (HttpURLConnection) project.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -64,8 +61,7 @@ public class WebService {
                         + conn.getResponseCode());
             }
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
+            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
             String output;
             StringBuffer str = new StringBuffer();
             while ((output = br.readLine()) != null) {
@@ -74,7 +70,6 @@ public class WebService {
             String strObject = String.valueOf(str);
 
             obj = new JSONObject(strObject);
-
 
             conn.disconnect();
             return obj;
@@ -86,11 +81,9 @@ public class WebService {
             Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-
         obj = new JSONObject();
 
         return obj;
-
     }
 
     public JSONObject ShowProject(String token, String id) throws JSONException, IOException {
@@ -158,7 +151,7 @@ public class WebService {
     public JSONObject ProjectTaskList(String token, String projectId) throws JSONException, IOException {
         JSONObject obj;
         try {
-            URL task = new URL("http://private-anon-17b101c44-sigma.apiary-mock.com/api/task/project/" + projectId + "?token=" + token + "");
+            URL task = new URL("http://sigma.fabien-cote.fr/api/task/project/" + projectId + "?token=" + token + "");
             HttpURLConnection conn = (HttpURLConnection) task.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -177,11 +170,8 @@ public class WebService {
             }
             String tempStr = str.substring(0, (str.indexOf("<!--")));
 
-            obj = new JSONObject(tempStr);
-
-
             conn.disconnect();
-            return obj;
+            return new JSONObject(tempStr);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ProtocolException ex) {
@@ -190,11 +180,9 @@ public class WebService {
             Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-
         obj = new JSONObject();
 
         return obj;
-
     }
 
     public JSONObject ShowTask(String token, String idtask) throws JSONException, IOException {
@@ -236,7 +224,6 @@ public class WebService {
         obj = new JSONObject();
 
         return obj;
-
     }
 
 
