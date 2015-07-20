@@ -148,10 +148,10 @@ public class WebService {
 
     }
 
-    public JSONObject ProjectTaskList(String token, String projectId) throws JSONException, IOException {
+    public JSONObject ProjectTaskList(String token, int projectId) throws JSONException, IOException {
         JSONObject obj;
         try {
-            URL task = new URL("http://sigma.fabien-cote.fr/api/task/project/" + projectId + "?token=" + token + "");
+            URL task = new URL("http://sigma.fabien-cote.fr/api/project/" + projectId + "/task?token=" + token + "");
             HttpURLConnection conn = (HttpURLConnection) task.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -161,17 +161,16 @@ public class WebService {
                         + conn.getResponseCode());
             }
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
+            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
             String output;
             StringBuffer str = new StringBuffer();
             while ((output = br.readLine()) != null) {
                 str.append(output);
             }
-            String tempStr = str.substring(0, (str.indexOf("<!--")));
+            String json = str.toString();
 
             conn.disconnect();
-            return new JSONObject(tempStr);
+            return new JSONObject(json);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ProtocolException ex) {

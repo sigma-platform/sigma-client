@@ -28,7 +28,6 @@ public class ConnexionWindow extends JFrame implements ActionListener{
         setSize(new Dimension(500,150));
         setTitle("Sigma");
 
-
         ButtonConnexion.setPreferredSize(new Dimension(150,50));
 
         Login.setPreferredSize(new Dimension(150,50));
@@ -54,25 +53,25 @@ public class ConnexionWindow extends JFrame implements ActionListener{
             char[] pass = Password.getPassword();
             JSONObject result;
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < pass.length; i++) {
-                sb.append(pass[i]);
+            for (char c : pass) {
+                sb.append(c);
             }
             try {
                 result = webService.connexion(log, sb);
 
                 if(result.getBoolean("success")){
-                    String to = result.getJSONObject("payload").getString("token");
-                    user.setToken(to);
+                    String token = result.getJSONObject("payload").getString("token");
+                    user.setToken(token);
                     System.out.println(user.getToken());
                     int id = result.getJSONObject("payload").getInt("user_id");
                     user.setId(id);
+                    User.setInstance(user);
 
-                    ProjectWindow projectWindow = new ProjectWindow();
-                    projectWindow.setUser(user);
-                    projectWindow.setVisible(true);
+                    ProjectView projectWindow = new ProjectView();
+                    projectWindow.init();
 
                     this.dispose();
-                }else{
+                } else {
                     Login.setText(result.getString("message"));
                 }
             } catch (JSONException e1) {

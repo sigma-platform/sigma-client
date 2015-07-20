@@ -23,6 +23,7 @@ public class User {
         this.id = id;
     }
 
-    static final private User INSTANCE = new User();
-    static public User getInstance() { return INSTANCE; }
+    static private User instance;
+    static public User getInstance() { return instance; }
+    static public void setInstance(User user) { instance = user; }
 }
