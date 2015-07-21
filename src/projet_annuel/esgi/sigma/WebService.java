@@ -10,16 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Created by Jordan on 18/07/2015.
- */
 public class WebService {
     public static final String SERVER_URL = "http://sigma.fabien-cote.fr/";
-    public static final String CONNECTION_URI = "api/auth/login";
+    public static final String LOGIN_URI = "api/auth/login";
+    public static final String LOGOUT_URI = "api/auth/logout?token={token}";
     public static final String USER_PROJECT_LIST_URI = "api/project/user/manager?token={token}";
     public static final String PROJECT_TASK_LIST_URI = "api/project/{id}/task?token={token}";
     public static final String PROJECT_VERSION_LIST_URI = "api/project/{id}/version?token={token}";
     public static final String PROJECT_USER_LIST_URI = "api/project/{id}/user?token={token}";
+    public static final String PROJECT_GROUP_LIST = "api/project-group?token={token}";
     public static final String STORE_TASK_URI = "api/task?token={token}";
     public static final String TASK_URI = "api/task/{id}?token={token}";
     public static final String STORE_VERSION_URI = "api/version?token={token}";

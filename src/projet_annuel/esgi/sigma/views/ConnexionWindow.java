@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -61,7 +60,7 @@ public class ConnexionWindow extends JFrame implements ActionListener{
                 HashMap<String, Object> postParams = new HashMap<String, Object>();
                 postParams.put("email", email);
                 postParams.put("password", password);
-                result = webService.call(WebService.POST_METHOD, WebService.CONNECTION_URI, null, postParams);
+                result = webService.call(WebService.POST_METHOD, WebService.LOGIN_URI, null, postParams);
 
                 if(result.getBoolean("success")) {
                     String token = result.getJSONObject("payload").getString("token");

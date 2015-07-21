@@ -18,9 +18,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.prefs.Preferences;
 
 public class ProjectView extends MouseAdapter implements ListSelectionListener, ActionListener {
 
+    private JFrame frame;
     private JList<Project> projectList;
     private JTabbedPane tabbedPane;
     private JPanel projectPanel;
@@ -30,10 +32,14 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
     private JTable tasksTable;
     private JButton addVersionButton;
     private JTable versionsTable;
+    private JButton disconnectButton;
+    private JButton addProjectButton;
 
     public ProjectView() {
         addTaskButton.addActionListener(this);
         addVersionButton.addActionListener(this);
+        addProjectButton.addActionListener(this);
+        disconnectButton.addActionListener(this);
 
         loadProjects();
         projectList.addListSelectionListener(this);
@@ -46,7 +52,12 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
     public void init() {
         Toolkit t = Toolkit.getDefaultToolkit();
         Dimension screenSize = t.getScreenSize();
-        JFrame frame = new JFrame("Sigma");
+        frame = new JFrame("Sigma");
+
+        JMenuBar menu = new JMenuBar();
+        JMenu item = new JMenu("Disconnect");
+        menu.add(item);
+
         frame.setContentPane(this.projectPanel);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
@@ -65,11 +76,9 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
             JSONArray projectsData = result.getJSONArray("payload");
 
             for(int i =0; i < projectsData.length(); i++) {
-                Project project = new Project();
                 JSONObject object = projectsData.getJSONObject(i);
 
-                project.setId(object.getInt("id"));
-                project.setName(object.getString("name"));
+                Project project = new Project(object);
 
                 listModel.addElement(project);
             }
@@ -108,6 +117,15 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
             VersionForm form = new VersionForm(projectList.getSelectedValue().getId(), null);
             form.init();
             form.frame.addWindowListener(versionFormWindowAdapter());
+        }
+
+        if(e.getSource().equals(addProjectButton)) {
+            ProjectForm form = new ProjectForm();
+            form.init();
+        }
+
+        if(e.getSource().equals(disconnectButton)) {
+            new LogOut().execute();
         }
     }
 
@@ -184,8 +202,6 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
                 popup.show(e.getComponent(), e.getX(), e.getY());
             }
         }
-
-
     }
 
     private WindowAdapter taskFormWindowAdapter() {
@@ -265,6 +281,43 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    class LogOut extends SwingWorker {
+        @Override
+        protected Object doInBackground() throws Exception {
+            JSONObject result;
+
+            WebService webService = new WebService();
+            HashMap<String, String> getParams = new HashMap<String, String>();
+            getParams.put("token", User.getInstance().getToken());
+
+            result = webService.call(WebService.GET_METHOD, WebService.LOGOUT_URI, getParams, null);
+
+            return result;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
+                    Preferences preferences = Preferences.userRoot().node("Sigma");
+                    preferences.remove("token");
+                    preferences.remove("userId");
+                    ProjectView.this.frame.dispose();
+                    ConnectionForm form = new ConnectionForm();
+                    form.init();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            super.done();
         }
     }
 }
