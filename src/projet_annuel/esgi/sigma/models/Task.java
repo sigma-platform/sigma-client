@@ -4,19 +4,23 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Task {
-    private int id;
+    public final static String[] STATUS_LIST = {"Etude", "Validation", "Réalisation", "Recette", "Acceptée"};
+
+    private Integer id;
     private String label;
     private String description;
     private String status;
     private String dateStart;
     private String dateEnd;
-    private double estimatedTime;
-    private int progress;
-    private int userId;
+    private Double estimatedTime;
+    private Integer progress;
+    private Integer userId;
+    private Integer versionId;
     private Version version;
+    private User user;
 
-    public Task(int id, String label, String description, String status, String dateStart, String dateEnd,
-                double estimatedTime, int progress, int userId, Version version) {
+    public Task(Integer id, String label, String description, String status, String dateStart, String dateEnd,
+                Double estimatedTime, Integer progress, Integer userId, Version version, User user) {
         this.id = id;
         this.label = label;
         this.description = description;
@@ -27,6 +31,7 @@ public class Task {
         this.progress = progress;
         this.userId = userId;
         this.version = version;
+        this.user = user;
     }
 
     public Task(JSONObject taskObject) throws JSONException {
@@ -34,10 +39,10 @@ public class Task {
                 taskObject.getString("status"), taskObject.getString("date_start"),
                 taskObject.getString("date_end"), taskObject.getDouble("estimated_time"),
                 taskObject.getInt("progress"), taskObject.getInt("user_id"),
-                new Version(taskObject.getJSONObject("version")));
+                new Version(taskObject.getJSONObject("version")), new User(taskObject.getJSONObject("user")));
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -61,16 +66,24 @@ public class Task {
         return dateEnd;
     }
 
-    public double getEstimatedTime() {
+    public Double getEstimatedTime() {
         return estimatedTime;
     }
 
-    public int getProgress() {
+    public Integer getProgress() {
         return progress;
     }
 
-    public int getUserId() {
+    public Integer getUserId() {
         return userId;
+    }
+
+    public Integer getVersionId() {
+        return versionId;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public Version getVersion() {

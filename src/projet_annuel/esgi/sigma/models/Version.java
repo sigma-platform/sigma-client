@@ -4,14 +4,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Version {
-    private int id;
+    private Integer id;
     private String label;
     private String description;
     private String dateStart;
     private String dateEnd;
-    private int projectId;
+    private Integer projectId;
 
-    public Version(int id, String label, String description, String dateStart, String dateEnd, int projectId) {
+    public Version(Integer id, String label, String description, String dateStart, String dateEnd, Integer projectId) {
         this.id = id;
         this.label = label;
         this.description = description;
@@ -26,11 +26,11 @@ public class Version {
                 versionObject.getString("date_end"), versionObject.getInt("project_id"));
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public int getProjectId() {
+    public Integer getProjectId() {
         return projectId;
     }
 
@@ -48,5 +48,10 @@ public class Version {
 
     public String getDateEnd() {
         return dateEnd;
+    }
+
+    @Override
+    public String toString() {
+        return label;
     }
 }

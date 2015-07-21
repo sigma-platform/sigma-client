@@ -12,13 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
 
-/**
- * Created by Jordan on 07/05/2015.
- */
 public class ProjectWindow extends JFrame implements ActionListener {
 
     private User currentUser;
@@ -58,46 +52,4 @@ public class ProjectWindow extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {}
-
-    public void setUser(User user){
-        currentUser = user;
-        try {
-            WebService webService = new WebService();
-            JSONObject result = webService.UserProjectList(currentUser.getToken());
-
-            List<Project> list = new ArrayList<Project>();
-            JSONArray projectsData = result.getJSONArray("payload");
-            final ArrayList<Project> projectList = new ArrayList<Project>();
-
-            for(int i =0;i<result.length(); i++) {
-                Project project = new Project();
-                JSONObject tempSteed = projectsData.getJSONObject(i);
-
-                project.setId(tempSteed.getInt("id"));
-                project.setName(tempSteed.getString("name"));
-
-                list.add(project);
-                System.out.println(list.get(i));
-                projectList.add(list.get(i));
-            }
-
-            projectBar.setModel(new DefaultListModel<Project>() {
-                List<Project> projects = projectList;
-
-                @Override
-                public int getSize() {
-                    return projects.size();
-                }
-
-                @Override
-                public Project getElementAt(int i) {
-                    return projects.get(i);
-                }
-            });
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

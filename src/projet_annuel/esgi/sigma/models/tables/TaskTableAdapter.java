@@ -9,8 +9,8 @@ import projet_annuel.esgi.sigma.models.User;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -26,8 +26,8 @@ public class TaskTableAdapter extends AbstractTableModel {
         new GetTaskList().execute();
     }
 
-    public List<Task> getTaskList() {
-        return taskList;
+    public Task getElementAt(int rowIndex) {
+        return taskList.get(rowIndex);
     }
 
     @Override
@@ -77,18 +77,9 @@ public class TaskTableAdapter extends AbstractTableModel {
         return headers[columnIndex];
     }
 
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return String.class;
-
-            case 1:
-                return String.class;
-
-            default:
-                return Object.class;
-        }
+    public void removeRow(int rowIndex) {
+        taskList.remove(rowIndex);
+        fireTableRowsDeleted(rowIndex, rowIndex);
     }
 
     class GetTaskList extends SwingWorker {
@@ -98,7 +89,10 @@ public class TaskTableAdapter extends AbstractTableModel {
             tasks = new ArrayList<Task>();
             try {
                 WebService webService = new WebService();
-                JSONObject result = webService.ProjectTaskList(User.getInstance().getToken(), projectId);
+                HashMap<String, String> params = new HashMap<String, String>();
+                params.put("token", User.getInstance().getToken());
+                params.put("id", String.valueOf(projectId));
+                JSONObject result = webService.call(WebService.GET_METHOD, WebService.PROJECT_TASK_LIST_URI, params, null);
                 JSONArray tasksData = result.getJSONArray("payload");
 
                 for(int i =0; i < tasksData.length(); i++) {
@@ -107,8 +101,6 @@ public class TaskTableAdapter extends AbstractTableModel {
                     tasks.add(task);
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
                 e.printStackTrace();
             }
             return tasks;

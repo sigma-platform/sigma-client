@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * Created by Jordan on 07/05/2015.
@@ -49,21 +50,24 @@ public class ConnexionWindow extends JFrame implements ActionListener{
 
         if(e.getSource() == ButtonConnexion){
             WebService webService = new WebService();
-            String log = Login.getText();
-            char[] pass = Password.getPassword();
             JSONObject result;
-            StringBuilder sb = new StringBuilder();
-            for (char c : pass) {
-                sb.append(c);
-            }
-            try {
-                result = webService.connexion(log, sb);
 
-                if(result.getBoolean("success")){
+            String email = Login.getText();
+            char[] passwordChars = Password.getPassword();
+            StringBuilder password = new StringBuilder();
+            for (char c : passwordChars) password.append(c);
+
+            try {
+                HashMap<String, Object> postParams = new HashMap<String, Object>();
+                postParams.put("email", email);
+                postParams.put("password", password);
+                result = webService.call(WebService.POST_METHOD, WebService.CONNECTION_URI, null, postParams);
+
+                if(result.getBoolean("success")) {
                     String token = result.getJSONObject("payload").getString("token");
-                    user.setToken(token);
-                    System.out.println(user.getToken());
                     int id = result.getJSONObject("payload").getInt("user_id");
+
+                    user.setToken(token);
                     user.setId(id);
                     User.setInstance(user);
 
@@ -74,10 +78,8 @@ public class ConnexionWindow extends JFrame implements ActionListener{
                 } else {
                     Login.setText(result.getString("message"));
                 }
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-            } catch (IOException e1) {
-                e1.printStackTrace();
+            } catch (JSONException exception) {
+                exception.printStackTrace();
             }
         }
     }

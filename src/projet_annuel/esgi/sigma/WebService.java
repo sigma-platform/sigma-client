@@ -6,224 +6,98 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by Jordan on 18/07/2015.
  */
 public class WebService {
+    public static final String SERVER_URL = "http://sigma.fabien-cote.fr/";
+    public static final String CONNECTION_URI = "api/auth/login";
+    public static final String USER_PROJECT_LIST_URI = "api/project/user/manager?token={token}";
+    public static final String PROJECT_TASK_LIST_URI = "api/project/{id}/task?token={token}";
+    public static final String PROJECT_VERSION_LIST_URI = "api/project/{id}/version?token={token}";
+    public static final String PROJECT_USER_LIST_URI = "api/project/{id}/user?token={token}";
+    public static final String STORE_TASK_URI = "api/task?token={token}";
+    public static final String TASK_URI = "api/task/{id}?token={token}";
+    public static final String STORE_VERSION_URI = "api/version?token={token}";
+    public static final String VERSION_URI = "api/version/{id}?token={token}";
+
+    public static final String GET_METHOD = "GET";
+    public static final String POST_METHOD = "POST";
+    public static final String PUT_METHOD = "PUT";
+    public static final String DELETE_METHOD = "DELETE";
 
     public WebService() {}
 
-    public JSONObject connexion(String email, StringBuilder password) throws JSONException, IOException {
-        JSONObject result;
+    public URL getFullUrlWithUriAndParams(String uri, HashMap<String, String> getParams) throws MalformedURLException {
+        String url = SERVER_URL.concat(uri);
 
-        URL url = new URL("http://sigma.fabien-cote.fr/api/auth/login");
-        URLConnection conn = url.openConnection();
+        if(getParams == null)
+            return new URL(url);
 
-        conn.setDoOutput(true);
-        OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-
-        writer.write("email=" + email + "&password=" + password);
-        writer.flush();
-        String output;
-        StringBuffer str = new StringBuffer();
-        String line;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
-            str.append(line);
+        for(Map.Entry<String, String> param : getParams.entrySet()) {
+            url = url.replace("{" + param.getKey() + "}", param.getValue());
         }
-        System.out.println(str);
 
-        String strObject = String.valueOf(str);
+        return new URL(url);
+    }
 
-        result = new JSONObject(strObject);
-        System.out.println(result);
+    public JSONObject call(String method, String uri, HashMap<String, String> getParams,
+                           HashMap<String, Object> postParams) {
+        JSONObject result = new JSONObject();
 
-        writer.close();
-        reader.close();
+        try {
+            URL url = getFullUrlWithUriAndParams(uri, getParams);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod(method);
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+
+            if(method.equals(POST_METHOD) || method.equals(PUT_METHOD)) {
+                conn.setDoOutput(true);
+                conn.getOutputStream().write(getPostDataBytes(postParams));
+            }
+
+            if (conn.getResponseCode() != 200)
+                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+
+            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+            String jsonResponse =  br.lines().collect(Collectors.joining(System.lineSeparator()));
+
+            result = new JSONObject(jsonResponse);
+
+            conn.disconnect();
+
+            return result;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         return result;
     }
 
-    public JSONObject UserProjectList(String token) throws JSONException, IOException {
-        JSONObject obj;
-        try {
-            URL project = new URL("http://sigma.fabien-cote.fr/api/project/user/manager?token=" + token);
-            HttpURLConnection conn = (HttpURLConnection) project.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
+    private byte[] getPostDataBytes(HashMap<String, Object> postParams) throws UnsupportedEncodingException {
+        StringBuilder postData = new StringBuilder();
 
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
+        for (Map.Entry<String, Object> param : postParams.entrySet()) {
+            if (postData.length() != 0)
+                postData.append('&');
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String output;
-            StringBuffer str = new StringBuffer();
-            while ((output = br.readLine()) != null) {
-                str.append(output);
-            }
-            String strObject = String.valueOf(str);
-
-            obj = new JSONObject(strObject);
-
-            conn.disconnect();
-            return obj;
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ProtocolException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
+            postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+            postData.append('=');
+            postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
         }
 
-        obj = new JSONObject();
-
-        return obj;
+        return postData.toString().getBytes("UTF-8");
     }
-
-    public JSONObject ShowProject(String token, String id) throws JSONException, IOException {
-        JSONObject obj;
-        try {
-            URL project = new URL("http://private-anon-17b101c44-sigma.apiary-mock.com/api/project/" + id + "?token=" + token + "");
-            HttpURLConnection conn = (HttpURLConnection) project.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
-            String output;
-            StringBuffer str = new StringBuffer();
-            while ((output = br.readLine()) != null) {
-                str.append(output);
-            }
-            String tempStr = str.substring(0, (str.indexOf("<!--")));
-
-            obj = new JSONObject(tempStr);
-
-
-            conn.disconnect();
-            return obj;
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ProtocolException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-
-        obj = new JSONObject();
-
-        return obj;
-
-    }
-
-    public void StoreVersion(String token) throws JSONException, IOException {
-        JSONObject obj;
-        URL url = new URL("http://sigma.fabien-cote.fr/api/version");
-        URLConnection conn = url.openConnection();
-        conn.setDoOutput(true);
-        OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-
-        writer.write("?token=" + token);
-        writer.flush();
-        String line;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
-        }
-        writer.close();
-        reader.close();
-
-
-    }
-
-    public JSONObject ProjectTaskList(String token, int projectId) throws JSONException, IOException {
-        JSONObject obj;
-        try {
-            URL task = new URL("http://sigma.fabien-cote.fr/api/project/" + projectId + "/task?token=" + token + "");
-            HttpURLConnection conn = (HttpURLConnection) task.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String output;
-            StringBuffer str = new StringBuffer();
-            while ((output = br.readLine()) != null) {
-                str.append(output);
-            }
-            String json = str.toString();
-
-            conn.disconnect();
-            return new JSONObject(json);
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ProtocolException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        obj = new JSONObject();
-
-        return obj;
-    }
-
-    public JSONObject ShowTask(String token, String idtask) throws JSONException, IOException {
-        JSONObject obj;
-        try {
-            URL task = new URL("http://private-anon-17b101c44-sigma.apiary-mock.com/api/task/" + idtask + "?token=" + token + "");
-            HttpURLConnection conn = (HttpURLConnection) task.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
-            String output;
-            StringBuffer str = new StringBuffer();
-            while ((output = br.readLine()) != null) {
-                str.append(output);
-            }
-            String tempStr = str.substring(0, (str.indexOf("<!--")));
-
-            obj = new JSONObject(tempStr);
-
-
-            conn.disconnect();
-            return obj;
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ProtocolException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(WebService.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-
-        obj = new JSONObject();
-
-        return obj;
-    }
-
-
 }
