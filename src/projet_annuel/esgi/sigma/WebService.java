@@ -14,6 +14,8 @@ public class WebService {
     public static final String SERVER_URL = "http://sigma.fabien-cote.fr/";
     public static final String LOGIN_URI = "api/auth/login";
     public static final String LOGOUT_URI = "api/auth/logout?token={token}";
+    public static final String STORE_PROJECT_URI = "api/project?token={token}";
+    public static final String SYNC_USER_ACCESS_PROJECT_URI = "api/project/{id}/user?token={token}";
     public static final String USER_PROJECT_LIST_URI = "api/project/user/manager?token={token}";
     public static final String PROJECT_TASK_LIST_URI = "api/project/{id}/task?token={token}";
     public static final String PROJECT_VERSION_LIST_URI = "api/project/{id}/version?token={token}";
@@ -37,9 +39,8 @@ public class WebService {
         if(getParams == null)
             return new URL(url);
 
-        for(Map.Entry<String, String> param : getParams.entrySet()) {
+        for(Map.Entry<String, String> param : getParams.entrySet())
             url = url.replace("{" + param.getKey() + "}", param.getValue());
-        }
 
         return new URL(url);
     }
@@ -61,7 +62,7 @@ public class WebService {
                 conn.getOutputStream().write(getPostDataBytes(postParams));
             }
 
-            if (conn.getResponseCode() != 200)
+            if (conn.getResponseCode() >= 500)
                 throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 
             BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));

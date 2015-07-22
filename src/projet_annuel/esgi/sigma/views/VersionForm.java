@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 public class VersionForm implements ActionListener {
     private Integer projectId;
@@ -76,39 +77,37 @@ public class VersionForm implements ActionListener {
     }
 
     class PostVersion extends SwingWorker {
-        private Version version = null;
-
         protected Object doInBackground() throws Exception {
-            try {
-                WebService webService = new WebService();
-                HashMap<String, String> getParams = new HashMap<String, String>();
-                getParams.put("token", User.getInstance().getToken());
+            WebService webService = new WebService();
+            HashMap<String, String> getParams = new HashMap<String, String>();
+            getParams.put("token", User.getInstance().getToken());
 
-                HashMap<String, Object> postParams = VersionForm.this.getVersionPostMap();
+            HashMap<String, Object> postParams = VersionForm.this.getVersionPostMap();
 
-                JSONObject result = webService.call(WebService.POST_METHOD, WebService.STORE_VERSION_URI, getParams, postParams);
-                JSONObject versionData = result.getJSONObject("payload");
-
-                version = new Version(versionData);
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return version;
+            return webService.call(WebService.POST_METHOD, WebService.STORE_VERSION_URI, getParams, postParams);
         }
 
         @Override
         protected void done() {
             super.done();
-            VersionForm.this.frame.dispose();
+            try {
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
+                    VersionForm.this.frame.dispose();
+                    new Toast(result.getString("message"), 5000).setVisible(true);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     class UpdateVersion extends SwingWorker {
         protected Object doInBackground() throws Exception {
-            JSONObject result;
-
             WebService webService = new WebService();
 
             HashMap<String, String> getParams = new HashMap<String, String>();
@@ -117,16 +116,25 @@ public class VersionForm implements ActionListener {
 
             HashMap<String, Object> postParams = VersionForm.this.getVersionPostMap();
 
-            result = webService.call(WebService.PUT_METHOD, WebService.VERSION_URI, getParams, postParams);
-            JSONObject versionData = result.getJSONObject("payload");
-
-            return new Version(versionData);
+            return webService.call(WebService.PUT_METHOD, WebService.VERSION_URI, getParams, postParams);
         }
 
         @Override
         protected void done() {
             super.done();
-            VersionForm.this.frame.dispose();
+            try {
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
+                    VersionForm.this.frame.dispose();
+                    new Toast(result.getString("message"), 5000).setVisible(true);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

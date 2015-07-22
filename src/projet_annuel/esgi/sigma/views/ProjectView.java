@@ -90,11 +90,17 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
     }
 
     public void loadTasks() {
+        if(projectList.getSelectedValue() == null)
+            return;
+
         tasksTable.setModel(new TaskTableAdapter(projectList.getSelectedValue().getId()));
         tasksTable.setAutoCreateRowSorter(true);
     }
 
     public void loadVersions() {
+        if(projectList.getSelectedValue() == null)
+            return;
+
         versionsTable.setModel(new VersionTableAdapter(projectList.getSelectedValue().getId()));
         versionsTable.setAutoCreateRowSorter(true);
     }
@@ -122,6 +128,7 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
         if(e.getSource().equals(addProjectButton)) {
             ProjectForm form = new ProjectForm();
             form.init();
+            form.frame.addWindowListener(projectFormWindowAdapter());
         }
 
         if(e.getSource().equals(disconnectButton)) {
@@ -222,6 +229,15 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
         };
     }
 
+    private WindowAdapter projectFormWindowAdapter() {
+        return  new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                JOptionPane.showMessageDialog(ProjectView.this.frame, "Project successfully created, please wait until an administrator validate the project.");
+            }
+        };
+    }
+
     class DeleteTask extends SwingWorker {
         protected Object doInBackground() throws Exception {
             JSONObject result;
@@ -241,8 +257,11 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
         protected void done() {
             super.done();
             try {
-                if(((JSONObject) get()).getBoolean("success"))
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
                     ((TaskTableAdapter) tasksTable.getModel()).removeRow(tasksTable.getSelectedRow());
+                    new Toast(result.getString("message"), 5000).setVisible(true);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -272,8 +291,11 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
         protected void done() {
             super.done();
             try {
-                if(((JSONObject) get()).getBoolean("success"))
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
                     ((VersionTableAdapter) versionsTable.getModel()).removeRow(versionsTable.getSelectedRow());
+                    new Toast(result.getString("message"), 5000).setVisible(true);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
