@@ -2,7 +2,6 @@ package projet_annuel.esgi.sigma;
 
 import projet_annuel.esgi.sigma.models.User;
 import projet_annuel.esgi.sigma.views.ConnectionForm;
-import projet_annuel.esgi.sigma.views.ConnexionWindow;
 import projet_annuel.esgi.sigma.views.ProjectView;
 
 import javax.swing.*;
