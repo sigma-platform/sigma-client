@@ -438,28 +438,14 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
 
         @Override
         protected void done() {
-            try {
-                JSONObject result = (JSONObject) get();
-                if(result.getBoolean("success")) {
-                    Preferences preferences = Preferences.userRoot().node("Sigma");
-                    preferences.remove("token");
-                    preferences.remove("userId");
-                    ProjectView.this.frame.dispose();
-                    ConnectionForm form = new ConnectionForm();
-                    form.init();
-                } else {
-                    ProjectView.this.frame.dispose();
-                    ConnectionForm form = new ConnectionForm();
-                    form.init();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
             super.done();
+
+            Preferences preferences = Preferences.userRoot().node("Sigma");
+            preferences.remove("token");
+            preferences.remove("userId");
+            ProjectView.this.frame.dispose();
+            ConnectionForm form = new ConnectionForm();
+            form.init();
         }
     }
 }
