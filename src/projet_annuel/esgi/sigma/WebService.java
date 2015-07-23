@@ -66,8 +66,15 @@ public class WebService {
             if (conn.getResponseCode() >= 500)
                 throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String jsonResponse =  br.lines().collect(Collectors.joining(System.lineSeparator()));
+            BufferedReader br;
+            String jsonResponse;
+            if(conn.getResponseCode() >= 400) {
+                br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
+                jsonResponse =  br.lines().collect(Collectors.joining(System.lineSeparator()));
+            } else {
+                br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+                jsonResponse =  br.lines().collect(Collectors.joining(System.lineSeparator()));
+            }
 
             result = new JSONObject(jsonResponse);
 

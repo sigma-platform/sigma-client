@@ -447,6 +447,10 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
                     ProjectView.this.frame.dispose();
                     ConnectionForm form = new ConnectionForm();
                     form.init();
+                } else {
+                    ProjectView.this.frame.dispose();
+                    ConnectionForm form = new ConnectionForm();
+                    form.init();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
