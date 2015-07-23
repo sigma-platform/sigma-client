@@ -15,7 +15,6 @@ public class User {
     private String firstname;
     private String lastname;
     private String createdAt;
-    private Integer roleId;
     private HashMap<Integer, Project> projects;
 
     public final static List<Role> USER_PROJECT_ROLES;
@@ -30,19 +29,18 @@ public class User {
     public User() {}
 
     public User(int id, String email, String firstname,
-                String lastname, String createdAt, Integer roleId) {
+                String lastname, String createdAt) {
         this.id = id;
         this.email = email;
         this.firstname = firstname;
         this.lastname = lastname;
         this.createdAt = createdAt;
-        this.roleId = roleId;
     }
 
     public User(JSONObject userObject) throws JSONException{
         this(userObject.getInt("id"), userObject.getString("email"),
                 userObject.getString("firstname"), userObject.getString("lastname"),
-                userObject.getString("created_at"), userObject.getInt("role_id"));
+                userObject.getString("created_at"));
     }
 
     public int getId() {
@@ -63,10 +61,6 @@ public class User {
 
     public String getLastname() {
         return lastname;
-    }
-
-    public Integer getRoleId() {
-        return roleId;
     }
 
     public String getCreatedAt() {

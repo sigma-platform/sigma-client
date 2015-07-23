@@ -12,7 +12,7 @@ public class Main {
     public static void main(String[] args) {
         final Preferences preferences = Preferences.userRoot().node("Sigma");
 
-        Runnable run= new Runnable(){
+        Runnable run = new Runnable(){
             @Override
             public void run() {
                 String token = preferences.get("token", "BAD_TOKEN");

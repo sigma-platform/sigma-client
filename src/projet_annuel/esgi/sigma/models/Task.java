@@ -74,14 +74,6 @@ public class Task {
         return progress;
     }
 
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public Integer getVersionId() {
-        return versionId;
-    }
-
     public User getUser() {
         return user;
     }

@@ -9,29 +9,23 @@ public class Version {
     private String description;
     private String dateStart;
     private String dateEnd;
-    private Integer projectId;
 
-    public Version(Integer id, String label, String description, String dateStart, String dateEnd, Integer projectId) {
+    public Version(Integer id, String label, String description, String dateStart, String dateEnd) {
         this.id = id;
         this.label = label;
         this.description = description;
         this.dateStart = dateStart;
         this.dateEnd = dateEnd;
-        this.projectId = projectId;
     }
 
     public Version(JSONObject versionObject) throws JSONException {
         this(versionObject.getInt("id"), versionObject.getString("label"),
                 versionObject.getString("description"), versionObject.getString("date_start"),
-                versionObject.getString("date_end"), versionObject.getInt("project_id"));
+                versionObject.getString("date_end"));
     }
 
     public Integer getId() {
         return id;
-    }
-
-    public Integer getProjectId() {
-        return projectId;
     }
 
     public String getLabel() {
