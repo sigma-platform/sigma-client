@@ -10,6 +10,7 @@ public class Project {
     private String slug;
     private Integer status;
     private Integer projectGroupId;
+    private Integer roleId;
     private ProjectGroup projectGroup;
 
     public Project() {}
@@ -58,12 +59,20 @@ public class Project {
         return projectGroup;
     }
 
+    public Integer getRoleId() {
+        return roleId;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public void setRoleId(Integer roleId) {
+        this.roleId = roleId;
     }
 
     @Override

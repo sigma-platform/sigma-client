@@ -9,6 +9,7 @@ import projet_annuel.esgi.sigma.models.Task;
 import projet_annuel.esgi.sigma.models.User;
 import projet_annuel.esgi.sigma.models.Version;
 import projet_annuel.esgi.sigma.models.tables.TaskTableAdapter;
+import projet_annuel.esgi.sigma.models.tables.UserTableAdapter;
 import projet_annuel.esgi.sigma.models.tables.VersionTableAdapter;
 
 import javax.swing.*;
@@ -16,7 +17,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashMap;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.prefs.Preferences;
 
@@ -34,11 +36,14 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
     private JTable versionsTable;
     private JButton disconnectButton;
     private JButton addProjectButton;
+    private JButton addUserButton;
+    private JTable usersTable;
 
     public ProjectView() {
         addTaskButton.addActionListener(this);
         addVersionButton.addActionListener(this);
         addProjectButton.addActionListener(this);
+        addUserButton.addActionListener(this);
         disconnectButton.addActionListener(this);
 
         loadProjects();
@@ -47,6 +52,7 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
 
         tasksTable.addMouseListener(this);
         versionsTable.addMouseListener(this);
+        usersTable.addMouseListener(this);
     }
 
     public void init() {
@@ -105,10 +111,19 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
         versionsTable.setAutoCreateRowSorter(true);
     }
 
+    public void loadUsers() {
+        if(projectList.getSelectedValue() == null)
+            return;
+
+        usersTable.setModel(new UserTableAdapter(projectList.getSelectedValue().getId()));
+        usersTable.setAutoCreateRowSorter(true);
+    }
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
         loadTasks();
         loadVersions();
+        loadUsers();
     }
 
     @Override
@@ -129,6 +144,12 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
             ProjectForm form = new ProjectForm();
             form.init();
             form.frame.addWindowListener(projectFormWindowAdapter());
+        }
+
+        if(e.getSource().equals(addUserButton)) {
+            UserForm form = new UserForm(projectList.getSelectedValue(), null, ((UserTableAdapter) usersTable.getModel()).getUserList());
+            form.init();
+            form.frame.addWindowListener(userFormWindowAdapter());
         }
 
         if(e.getSource().equals(disconnectButton)) {
@@ -209,6 +230,41 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
                 popup.show(e.getComponent(), e.getX(), e.getY());
             }
         }
+
+        if(e.getSource().equals(usersTable)) {
+            int r = usersTable.rowAtPoint(e.getPoint());
+            if (r >= 0 && r < usersTable.getRowCount())
+                usersTable.setRowSelectionInterval(r, r);
+            else
+                usersTable.clearSelection();
+
+            int rowIndex = usersTable.getSelectedRow();
+            if (rowIndex < 0) return;
+
+            if (SwingUtilities.isRightMouseButton(e) && e.getComponent() instanceof JTable) {
+                JPopupMenu popup = new JPopupMenu();
+                JMenuItem editItem = new JMenuItem("Edit");
+                editItem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        User selectedUser = ((UserTableAdapter) usersTable.getModel()).getElementAt(usersTable.getSelectedRow());
+                        UserForm form = new UserForm(ProjectView.this.projectList.getSelectedValue(), selectedUser, ((UserTableAdapter) usersTable.getModel()).getUserList());
+                        form.init();
+                        form.frame.addWindowListener(userFormWindowAdapter());
+                    }
+                });
+                JMenuItem deleteItem = new JMenuItem("Delete");
+                deleteItem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        new SyncUserAccess().execute();
+                    }
+                });
+                popup.add(editItem);
+                popup.add(deleteItem);
+                popup.show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
     }
 
     private WindowAdapter taskFormWindowAdapter() {
@@ -225,6 +281,15 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
             @Override
             public void windowClosed(WindowEvent e) {
                 ProjectView.this.loadVersions();
+            }
+        };
+    }
+
+    private WindowAdapter userFormWindowAdapter() {
+        return  new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                ProjectView.this.loadUsers();
             }
         };
     }
@@ -260,6 +325,57 @@ public class ProjectView extends MouseAdapter implements ListSelectionListener, 
                 JSONObject result = (JSONObject) get();
                 if(result.getBoolean("success")) {
                     ((TaskTableAdapter) tasksTable.getModel()).removeRow(tasksTable.getSelectedRow());
+                    new Toast(result.getString("message"), 5000).setVisible(true);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class SyncUserAccess extends SwingWorker {
+        protected Object doInBackground() throws Exception {
+            JSONObject result;
+
+            WebService webService = new WebService();
+            HashMap<String, String> getParams = new HashMap<String, String>();
+            getParams.put("token", User.getInstance().getToken());
+            getParams.put("id", String.valueOf(projectList.getSelectedValue().getId()));
+            HashMap<String, Object> postParams = new HashMap<String, Object>();
+            List<User> users = ((UserTableAdapter) usersTable.getModel()).getUserList();
+            ((UserTableAdapter) usersTable.getModel()).removeRow(usersTable.getSelectedRow());
+
+            JSONArray usersArray = new JSONArray();
+            for(User user : users) {
+                Integer roleId = null;
+
+                if(user.getProjects().containsKey(ProjectView.this.projectList.getSelectedValue().getId()))
+                    roleId = user.getProjects().get(ProjectView.this.projectList.getSelectedValue().getId()).getRoleId();
+
+                if(roleId != null)
+                    usersArray.put(new JSONObject()
+                            .put("user_id", user.getId())
+                            .put("role_id", roleId));
+            }
+
+
+            postParams.put("users", usersArray.toString());
+
+            result = webService.call(WebService.PUT_METHOD, WebService.SYNC_USER_ACCESS_PROJECT_URI, getParams, postParams);
+
+            return result;
+        }
+
+        @Override
+        protected void done() {
+            super.done();
+            try {
+                JSONObject result = (JSONObject) get();
+                if(result.getBoolean("success")) {
                     new Toast(result.getString("message"), 5000).setVisible(true);
                 }
             } catch (JSONException e) {
